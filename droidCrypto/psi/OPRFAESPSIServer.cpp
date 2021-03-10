@@ -6,22 +6,16 @@
 #include <droidCrypto/utils/Log.h>
 #include <endian.h>
 #include <thread>
-#include "cuckoofilter/cuckoofilter.h"
 
 namespace droidCrypto {
 
-OPRFAESPSIServer::OPRFAESPSIServer(ChannelWrapper &chan,
-                                   size_t num_threads /*=1*/)
-    : PhasedPSIServer(chan, num_threads), circ_(chan) {}
-
-void OPRFAESPSIServer::Setup(std::vector<block> &elements) {
-  typedef cuckoofilter::CuckooFilter<
-      uint64_t *, 32, cuckoofilter::SingleTable,
-      cuckoofilter::TwoIndependentMultiplyShift128>
-      CuckooFilter;
-
-  auto time0 = std::chrono::high_resolution_clock::now();
-  size_t num_server_elements = elements.size();
+OPRFAESPSIServer::OPRFAESPSIServer(std::vector<block> &elements, ChannelWrapper &chan, size_t num_threads /*=1*/)
+    : PhasedPSIServer(chan, num_threads),
+      num_server_elements_(elements.size()),
+      cf_(num_server_elements_), 
+      circ_(chan) {
+  time0_ = std::chrono::high_resolution_clock::now();
+  size_t num_server_elements = num_server_elements_;
 
   // MT-bounds
   size_t elements_per_thread = num_server_elements / num_threads_;
@@ -48,25 +42,36 @@ void OPRFAESPSIServer::Setup(std::vector<block> &elements) {
     threads[thrd].join();
   }
 
-  auto time1 = std::chrono::high_resolution_clock::now();
-  CuckooFilter cf(num_server_elements);
+  time1_ = std::chrono::high_resolution_clock::now();
 
   for (size_t i = 0; i < num_server_elements; i++) {
-    auto success = cf.Add((uint64_t *)&elements[i]);
+    auto success = cf_.Add((uint64_t *)&elements[i]);
     (void)success;
     assert(success == cuckoofilter::Ok);
   }
-  auto time2 = std::chrono::high_resolution_clock::now();
+  time2_ = std::chrono::high_resolution_clock::now();
   Log::v("PSI", "Built CF");
   elements.clear();  // free some memory
-  Log::v("CF", "%s", cf.Info().c_str());
-  auto time3 = std::chrono::high_resolution_clock::now();
+  Log::v("CF", "%s", cf_.Info().c_str());
+          
+}
 
-  num_server_elements = htobe64(num_server_elements);
+void OPRFAESPSIServer::AddItem(block& blck) {
+  assert(false && "not implemented");    
+}
+
+void OPRFAESPSIServer::Save(const char*) {
+    assert(false && "not implemented");
+}
+
+void OPRFAESPSIServer::Setup() {
+  time3_ = std::chrono::high_resolution_clock::now();
+
+  size_t num_server_elements = htobe64(num_server_elements_);
   channel_.send((uint8_t *)&num_server_elements, sizeof(num_server_elements));
 
   // send cuckoofilter in steps to save memory
-  const uint64_t size_in_tags = cf.SizeInTags();
+  const uint64_t size_in_tags = cf_.SizeInTags();
   const uint64_t step = (1 << 16);
   uint64_t uint64_send;
   uint64_send = htobe64(size_in_tags);
@@ -75,7 +80,7 @@ void OPRFAESPSIServer::Setup(std::vector<block> &elements) {
   channel_.send((uint8_t *)&uint64_send, sizeof(uint64_send));
 
   for (uint64_t i = 0; i < size_in_tags; i += step) {
-    std::vector<uint8_t> cf_ser = cf.serialize(step, i);
+    std::vector<uint8_t> cf_ser = cf_.serialize(step, i);
     uint64_t cfsize = cf_ser.size();
     uint64_send = htobe64(cfsize);
     channel_.send((uint8_t *)&uint64_send, sizeof(uint64_send));
@@ -83,15 +88,15 @@ void OPRFAESPSIServer::Setup(std::vector<block> &elements) {
   }
 
   std::vector<unsigned __int128> hash_params =
-      cf.GetTwoIndependentMultiplyShiftParams();
+      cf_.GetTwoIndependentMultiplyShiftParams();
   for (auto &par : hash_params) {
     channel_.send((uint8_t *)&par, sizeof(par));
   }
 
-  auto time4 = std::chrono::high_resolution_clock::now();
-  std::chrono::duration<double> enc_time = time1 - time0;
-  std::chrono::duration<double> cf_time = time2 - time1;
-  std::chrono::duration<double> trans_time = time4 - time3;
+  time4_ = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double> enc_time = time1_ - time0_;
+  std::chrono::duration<double> cf_time = time2_ - time1_;
+  std::chrono::duration<double> trans_time = time4_ - time3_;
   Log::v("PSI",
          "Setup Time:\n\t%fsec ENC, %fsec CF,\n\t%fsec Setup,\n\t%fsec "
          "Trans,\n\t Setup Comm: %fMiB sent, %fMiB recv\n",

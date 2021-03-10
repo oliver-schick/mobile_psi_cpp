@@ -26,14 +26,14 @@ int main(int argc, char** argv) {
         //server
         droidCrypto::CSocketChannel chan(nullptr, 8000, true);
 
-        droidCrypto::OPRFLowMCPSIServer server(chan, 1);
         std::vector<droidCrypto::block> elements;
         elements.push_back(droidCrypto::toBlock((const uint8_t*)"ffffffff88888888"));
         droidCrypto::SecureRandom rnd;
         for(size_t i = 1; i < num_inputs; i++) {
             elements.push_back(rnd.randBlock());
         }
-        server.doPSI(elements);
+        droidCrypto::OPRFLowMCPSIServer server(elements, chan, 1);
+        server.doPSI();
     }
     else if(strcmp("1", argv[1]) == 0) {
         //client

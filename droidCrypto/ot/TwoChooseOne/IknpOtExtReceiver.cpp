@@ -33,7 +33,7 @@ std::unique_ptr<OtExtReceiver> IknpOtExtReceiver::split() {
 
   ret->setBaseOts(baseRecvOts);
 
-  return std::move(ret);
+  return ret;
 }
 
 void IknpOtExtReceiver::receive(const BitVector &choices, span<block> messages,

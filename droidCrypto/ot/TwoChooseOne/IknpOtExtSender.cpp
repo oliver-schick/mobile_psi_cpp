@@ -23,7 +23,7 @@ std::unique_ptr<OtExtSender> IknpOtExtSender::split() {
 
   ret->setBaseOts(baseRecvOts, mBaseChoiceBits);
 
-  return std::move(ret);
+  return ret;
 }
 
 void IknpOtExtSender::setBaseOts(span<block> baseRecvOts,
@@ -221,7 +221,6 @@ jlong Java_com_example_mobile_1psi_droidCrypto_OT_IknpOTExtSender_init(
   droidCrypto::IknpOtExtSender *sender = new droidCrypto::IknpOtExtSender();
   void *inputPtr = env->GetDirectBufferAddress(baseOTs);
   jlong inputLength = env->GetDirectBufferCapacity(baseOTs);
-
   jbyte *choicePtr = env->GetByteArrayElements(choices, NULL);
   jlong choiceLength = env->GetArrayLength(choices);
   droidCrypto::BitVector choizes((uint8_t *)choicePtr,

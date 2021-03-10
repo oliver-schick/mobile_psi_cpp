@@ -44,7 +44,7 @@ namespace droidCrypto
 
         ret->setBaseOts(baseRecvOts);
 
-        return std::move(ret);
+        return ret;
     }
 
 

@@ -7,6 +7,17 @@
 
 namespace droidCrypto {
     namespace Utils {
+        
+        template<typename T>
+        constexpr char* to_char_pointer(T* pointer) {
+            return static_cast<char*>(static_cast<void*>(pointer));
+        }
+        
+        template<typename T>
+        constexpr char const* to_char_pointer(T const* pointer) {
+            return static_cast<char const*>(static_cast<void const*>(pointer));
+        }
+        
         void print(std::array<block, 128>& inOut);
         uint8_t getBit(std::array<block, 128>& inOut, uint64_t i, uint64_t j);
         void transpose128(std::array<block, 128>& inOut);

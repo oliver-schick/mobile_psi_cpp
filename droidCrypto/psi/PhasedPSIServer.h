@@ -16,15 +16,17 @@ class PhasedPSIServer {
         time_base(0),
         time_online(0){};
 
-  virtual void doPSI(std::vector<block> &elements) {
-    Setup(elements);
+  virtual void doPSI() {
+    Setup();
     Base();
     Online();
   }
 
-  virtual void Setup(std::vector<block> &elements) = 0;
+  virtual void Setup() = 0;
   virtual void Base() = 0;
   virtual void Online() = 0;
+  virtual void AddItem(block&) = 0;
+  virtual void Save(const char*) = 0;
 
  protected:
   ChannelWrapper &channel_;

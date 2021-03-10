@@ -23,7 +23,7 @@ namespace droidCrypto
 
         ret->setBaseOts(baseRecvOts, mBaseChoiceBits);
 
-        return std::move(ret);
+        return ret;
     }
 
     void KosOtExtSender::setBaseOts(span<block> baseRecvOts, const BitVector & choices)
