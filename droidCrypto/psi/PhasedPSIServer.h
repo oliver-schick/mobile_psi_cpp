@@ -15,6 +15,8 @@ class PhasedPSIServer {
         time_setup(0),
         time_base(0),
         time_online(0){};
+        
+  virtual ~PhasedPSIServer(){};
 
   virtual void doPSI() {
     Setup();

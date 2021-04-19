@@ -1,18 +1,31 @@
 /**
  \file 		Some parts of this file are taken from
- ABY/src/examples/lowmc/common/lowmccircuit.cpp \author
- michael.zohner@ec-spride.de \copyright	ABY - A Framework for Efficient
- Mixed-protocol Secure Two-party Computation Copyright (C) 2019 Engineering
- Cryptographic Protocols Group, TU Darmstadt This program is free software: you
- can redistribute it and/or modify it under the terms of the GNU Lesser General
- Public License as published by the Free Software Foundation, either version 3
- of the License, or (at your option) any later version. ABY is distributed in
- the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
- implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See
- the GNU Lesser General Public License for more details. You should have
- received a copy of the GNU Lesser General Public License along with this
- program. If not, see <http://www.gnu.org/licenses/>.
- \brief		Implementation of AESCiruit
+			ABY/src/examples/lowmc/common/lowmccircuit.cpp
+ \author	michael.zohner@ec-spride.de
+ \copyright	This file is provided by the contributors of ABY - A Framework for
+			Efficient Mixed-protocol Secure Two-party Computation under MIT license
+ 
+	MIT License
+
+	Copyright (c) 2019 Engineering Cryptographic Protocols Group, TU Darmstadt
+
+	Permission is hereby granted, free of charge, to any person obtaining a copy
+	of this software and associated documentation files (the "Software"), to deal
+	in the Software without restriction, including without limitation the rights
+	to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+	copies of the Software, and to permit persons to whom the Software is
+	furnished to do so, subject to the following conditions:
+
+	The above copyright notice and this permission notice shall be included in all
+	copies or substantial portions of the Software.
+
+	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+	IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+	AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+	LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+	SOFTWARE.
 
  *  Modified by Daniel Kales, 2019
  *  * used LowMC circuit from ABY as a starting point for circuit implementation
@@ -31,6 +44,7 @@
 #include <droidCrypto/gc/WireLabel.h>
 #include <droidCrypto/gc/circuits/LowMCCircuit.h>
 #include <droidCrypto/utils/Log.h>
+#include <iostream>
 
 #define ceil_divide(x, y) ((((x) + (y)-1) / (y)))
 
@@ -38,7 +52,7 @@ namespace droidCrypto {
 
 //    LowMCCircuit::LowMCCircuit(ChannelWrapper& chan) : Circuit(chan,
 //    params.blocksize/*(params.nrounds+1)*/, params.blocksize,
-//    params.blocksize) {
+//    params.blocksize), mGrayCode(FOUR_RUSSIAN_WINDOW_SIZE){
 //
 //        m_linlayer.appendREV(lowmc_linlayer, sizeof(lowmc_linlayer)*8);
 //        m_roundconst.appendREV(lowmc_consts, sizeof(lowmc_consts)*8);
@@ -59,8 +73,6 @@ namespace droidCrypto {
 //        m_constCtr = 0;
 //
 //        //Build the GrayCode for the optimal window-size
-//        uint32_t wsize = 8;//floor_log2(statesize);
-//        m_tGrayCode = build_code(wsize);
 //
 //        //copy the input to the current state
 //        for (i = 0; i < statesize; i++)
@@ -83,7 +95,6 @@ namespace droidCrypto {
 //            LowMCAddRoundKey(state, key, statesize, round, env);
 //        }
 //
-//        destroy_code(m_tGrayCode);
 //        return state;
 //    }
 //
@@ -156,8 +167,8 @@ namespace droidCrypto {
 //        for (i = 0; i < ceil_divide(lowmcstatesize, wsize); i++) { //for each
 //        column-window
 //            for (j = 1; j < (1U << wsize); j++) {
-//                lut[m_tGrayCode->ord[j]] = env.XOR(lut[m_tGrayCode->ord[j -
-//                1]], state_pad[i * wsize + m_tGrayCode->inc[j - 1]]);
+//                lut[mGrayCode.ord[j]] = env.XOR(lut[mGrayCode.ord[j -
+//                1]], state_pad[i * wsize + mGrayCode.inc[j - 1]]);
 //            }
 //
 //            for (j = 0; j < lowmcstatesize; j++) {
@@ -177,7 +188,8 @@ namespace droidCrypto {
 //----------------------------------------------------------------------------------------------
 // SIMD
 SIMDLowMCCircuit::SIMDLowMCCircuit(ChannelWrapper &chan)
-    : SIMDCircuit(chan, params->n, params->n, params->n) {}
+    : SIMDCircuit(chan, params->n, params->n, params->n),
+      mGrayCode(FOUR_RUSSIAN_WINDOW_SIZE) {}
 
 std::vector<SIMDWireLabel> SIMDLowMCCircuit::computeFunction(
     const std::vector<WireLabel> &keyRev, const std::vector<SIMDWireLabel> &pt,
@@ -196,10 +208,6 @@ std::vector<SIMDWireLabel> SIMDLowMCCircuit::computeFunction(
   std::vector<WireLabel> key(keyRev.size());
   for (i = 0; i < keyRev.size(); i++)
     key[(i / 8) * 8 + 7 - i % 8] = keyRev[keyRev.size() - 1 - i];
-
-  // Build the GrayCode for the optimal window-size
-  uint32_t wsize = 8;  // floor_log2(statesize);
-  m_tGrayCode = build_code(wsize);
 
 #if defined(REDUCED_LINEAR_LAYER) && defined(REDUCED_LINEAR_LAYER_NEXT)
   LowMCXORConstant(state, params->precomputed_constant_linear, env);
@@ -235,7 +243,6 @@ std::vector<SIMDWireLabel> SIMDLowMCCircuit::computeFunction(
   }
 
 #endif
-  destroy_code(m_tGrayCode);
   for (i = 0; i < statesize; i++)
     result[(i / 8) * 8 + 7 - i % 8] = state[statesize - 1 - i];
   return result;
@@ -364,7 +371,8 @@ void SIMDLowMCCircuit::FourRussiansMatrixMult(std::vector<SIMDWireLabel> &state,
                                               const mzd_local_t *mat,
                                               SIMDGCEnv &env) {
   // round to nearest square for optimal window size
-  uint32_t wsize = 8;  // floor_log2(lowmcstatesize);
+  constexpr uint32_t wsize =
+      FOUR_RUSSIAN_WINDOW_SIZE;  // floor_log2(lowmcstatesize);
 
   // will only work if the statesize is a multiple of the window size
   assert(params->n % wsize == 0);
@@ -385,9 +393,9 @@ void SIMDLowMCCircuit::FourRussiansMatrixMult(std::vector<SIMDWireLabel> &state,
   for (i = 0; i < ceil_divide(params->n, wsize);
        i++) {  // for each column-window
     for (j = 1; j < (1U << wsize); j++) {
-      lut[m_tGrayCode->ord[j]] =
-          env.XOR(lut[m_tGrayCode->ord[j - 1]],
-                  state_pad[i * wsize + m_tGrayCode->inc[j - 1]]);
+      lut[mGrayCode.ord[j]] =
+          env.XOR(lut[mGrayCode.ord[j - 1]],
+                  state_pad[i * wsize + mGrayCode.inc[j - 1]]);
     }
 
     for (j = 0; j < params->n; j++) {
@@ -467,7 +475,8 @@ void SIMDLowMCCircuit::LowMCMult(std::vector<SIMDWireLabel> &val,
 //----------------------------------------------------------------------------------------------------------------------
 // Phased Circuit
 SIMDLowMCCircuitPhases::SIMDLowMCCircuitPhases(ChannelWrapper &chan)
-    : SIMDCircuitPhases(chan, params->n, params->n, params->n) {}
+    : SIMDCircuitPhases(chan, params->n, params->n, params->n),
+      mGrayCode(FOUR_RUSSIAN_WINDOW_SIZE) {}
 
 std::vector<SIMDWireLabel> SIMDLowMCCircuitPhases::computeFunction(
     const std::vector<WireLabel> &keyRev, const std::vector<SIMDWireLabel> &pt,
@@ -486,10 +495,6 @@ std::vector<SIMDWireLabel> SIMDLowMCCircuitPhases::computeFunction(
   std::vector<WireLabel> key(keyRev.size());
   for (i = 0; i < keyRev.size(); i++)
     key[(i / 8) * 8 + 7 - i % 8] = keyRev[keyRev.size() - 1 - i];
-
-  // Build the GrayCode for the optimal window-size
-  uint32_t wsize = 8;  // floor_log2(statesize);
-  m_tGrayCode = build_code(wsize);
 
 #if defined(REDUCED_LINEAR_LAYER) && defined(REDUCED_LINEAR_LAYER_NEXT)
   LowMCXORConstant(state, params->precomputed_constant_linear, env);
@@ -522,7 +527,6 @@ std::vector<SIMDWireLabel> SIMDLowMCCircuitPhases::computeFunction(
     LowMCAddRoundKeyMult(state, key, params->rounds[round - 1].k_matrix, env);
   }
 #endif
-  destroy_code(m_tGrayCode);
   for (i = 0; i < statesize; i++)
     result[(i / 8) * 8 + 7 - i % 8] = state[statesize - 1 - i];
   return result;
@@ -649,7 +653,7 @@ void SIMDLowMCCircuitPhases::LowMCRLLMult(std::vector<SIMDWireLabel> &val,
 void SIMDLowMCCircuitPhases::FourRussiansMatrixMult(
     std::vector<SIMDWireLabel> &state, const mzd_local_t *mat, SIMDGCEnv &env) {
   // round to nearest square for optimal window size
-  uint32_t wsize = 8;  // floor_log2(lowmcstatesize);
+  uint32_t wsize = FOUR_RUSSIAN_WINDOW_SIZE;
 
   // will only work if the statesize is a multiple of the window size
   assert(params->n % wsize == 0);
@@ -670,9 +674,9 @@ void SIMDLowMCCircuitPhases::FourRussiansMatrixMult(
   for (i = 0; i < ceil_divide(params->n, wsize);
        i++) {  // for each column-window
     for (j = 1; j < (1U << wsize); j++) {
-      lut[m_tGrayCode->ord[j]] =
-          env.XOR(lut[m_tGrayCode->ord[j - 1]],
-                  state_pad[i * wsize + m_tGrayCode->inc[j - 1]]);
+      lut[mGrayCode.ord[j]] =
+          env.XOR(lut[mGrayCode.ord[j - 1]],
+                  state_pad[i * wsize + mGrayCode.inc[j - 1]]);
     }
 
     for (j = 0; j < params->n; j++) {
