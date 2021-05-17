@@ -24,13 +24,13 @@ e.g., `droidCrypto/tests/test_psi_oprf_lowmc` runs the Garbled-Circuit based PSI
 
 In terminal 1:
 ```bash
-droidCrypto/tests/test_psi_oprf_lowmc 0 20
+build/droidCrypto/tests/test_psi_oprf_lowmc 0 20
 ```
 
 In terminal 2:
 
 ```bash
-droidCrypto/tests/test_psi_oprf_lowmc 1 10
+build/droidCrypto/tests/test_psi_oprf_lowmc 1 10
 ```
 
 This performs a set intersection using 2^{20} elements on the server (0) side and 2^{10} elements on the client (1) side. Only the item with index 0 is common for both sets, so the client program should only print "Intersection C0" (errors may occur based on the parameters of the cuckoo filter, but the default parameters should have an error probablity of 2^{-30}).
