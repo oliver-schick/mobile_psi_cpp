@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+typedef int64_t __int64;
 #include <jni.h>
 #include <droidCrypto/gc/circuits/Circuit.h>
 

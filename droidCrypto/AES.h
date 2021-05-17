@@ -2,6 +2,8 @@
 
 #include <cstdint>
 
+typedef int64_t __int64;
+
 #include <jni.h>
 
 #include <droidCrypto/Defines.h>

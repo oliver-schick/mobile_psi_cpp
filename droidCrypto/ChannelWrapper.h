@@ -2,6 +2,7 @@
 
 #include <droidCrypto/Defines.h>
 
+typedef int64_t __int64;
 #include <jni.h>
 #include <vector>
 #include <deque>

@@ -6,11 +6,23 @@ set(KECCAK_SRCS
   KeccakHash.c
   )
 
+if(MSYS OR CYGWIN)
+  configure_file(avx2/KeccakP-1600-AVX2-Windows.s 
+    avx2/KeccakP-1600-AVX2.s
+	COPYONLY
+    )
+else()
+  configure_file(avx2/KeccakP-1600-AVX2-Linux.s 
+    avx2/KeccakP-1600-AVX2.s
+	COPYONLY
+    )
+endif()
+	
 if ("${ANDROID}")
   set(KECCAK_SRCS ${KECCAK_SRCS}
     opt64/KeccakP-1600-opt64.c
     )
-else ()
+else()
   set(KECCAK_SRCS ${KECCAK_SRCS}
     avx2/KeccakP-1600-AVX2.s
     )

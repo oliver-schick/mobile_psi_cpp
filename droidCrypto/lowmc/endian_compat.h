@@ -56,6 +56,8 @@ static inline uint64_t bswap64(uint64_t x) {
 #else
 #define PICNIC_IS_LITTLE_ENDIAN
 #endif
+#elif defined(__CYGWIN__)
+#include <sys/param.h>
 #endif
 
 /* OS X / OpenBSD */
