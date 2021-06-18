@@ -30,7 +30,7 @@
 #define MUL_MC SELECT_V_VL(mzd_mul_v_uint64, mzd_mul_vl_uint64)
 #define XOR mzd_xor_uint64
 #define MUL SELECT_V_VL(mzd_mul_v_uint64, mzd_mul_vl_uint64)
-expanded_key lowmc_expand_key(lowmc_t const* lowmc, lowmc_key_t const* key) {
+expanded_key lowmc_expand_key(lowmc_t const* lowmc, lowmc_key_t* key) {
 
   expanded_key exp_key;
   exp_key.lowmc_key = key;

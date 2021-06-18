@@ -9,7 +9,7 @@ ECNRPRF::ECNRPRF(PRNG &prng, size_t element_size)
       element_size_(element_size),
       a0_(curve_, prng) {
   a_.reserve(element_size);
-  for (auto i = 0; i < element_size; i++) {
+  for (unsigned i = 0; i < element_size; i++) {
     REccNumber t(curve_, prng);
     a_.push_back(t);
   }
@@ -23,7 +23,7 @@ REccPoint ECNRPRF::prf(block input) {
   BitVector bv;
   bv.assign(input);
   REccNumber b(curve_, a0_);
-  for (auto i = 0; i < element_size_; i++) {
+  for (unsigned i = 0; i < element_size_; i++) {
     if (bv[i]) {
       b *= a_[i];
     }
@@ -54,7 +54,7 @@ void ECNRPRF::oprf(const BitVector &input, span<std::array<block, 2>> otSpan,
     r_0 *= a_[j];
     r_0.toBytes(buf2.data() + 32 * j);
   }
-  for (auto j = 0; j < buf2.size(); j++) {
+  for (unsigned j = 0; j < buf2.size(); j++) {
     buf1[j] ^= buf2[j];
   }
   r = r.inverse() * a0_;

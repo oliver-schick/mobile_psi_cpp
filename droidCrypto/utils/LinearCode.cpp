@@ -263,8 +263,8 @@ static std::array<block, 2> sBlockMasks{{ZeroBlock, AllOneBlock}};
 void LinearCode::encode(const span<block> &plaintxt,
                         const span<block> &codeword) {
 #ifndef NDEBUG
-  if (plaintxt.size() != plaintextBlkSize() ||
-      codeword.size() < codewordBlkSize())
+  if (static_cast<size_t>(plaintxt.size()) != plaintextBlkSize() ||
+      static_cast<size_t>(codeword.size()) < codewordBlkSize())
     throw std::runtime_error("");
 #endif
 
@@ -376,8 +376,8 @@ void LinearCode::encode(const span<block> &plaintxt,
 void LinearCode::encode(const span<uint8_t> &plaintxt,
                         const span<uint8_t> &codeword) {
 #ifndef NDEBUG
-  if (plaintxt.size() != plaintextU8Size() ||
-      codeword.size() < codewordU8Size())
+  if (static_cast<size_t>(plaintxt.size()) != plaintextU8Size() ||
+      static_cast<size_t>(codeword.size()) < codewordU8Size())
     throw std::runtime_error("");
 #endif
   encode(plaintxt.data(), codeword.data());

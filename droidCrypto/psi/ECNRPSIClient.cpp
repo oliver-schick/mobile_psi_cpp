@@ -84,7 +84,7 @@ std::vector<size_t> ECNRPSIClient::Online(std::vector<block> &elements) {
 
   auto time4 = std::chrono::high_resolution_clock::now();
   block *choices = (block *)ot_choices_.data();
-  for (auto i = 0; i < elements.size(); i++) {
+  for (unsigned i = 0; i < elements.size(); i++) {
     choices[i] ^= elements[i];
   }
   auto time5 = std::chrono::high_resolution_clock::now();
@@ -92,7 +92,7 @@ std::vector<size_t> ECNRPSIClient::Online(std::vector<block> &elements) {
   REllipticCurve curve;
   std::vector<std::array<uint8_t, 33>> prfOut;
   prfOut.reserve(elements.size());
-  for (auto i = 0; i < elements.size(); i++) {
+  for (unsigned i = 0; i < elements.size(); i++) {
     BitVector bv;
     bv.assign(elements[i]);
     REccNumber r(curve, 1);

@@ -23,7 +23,7 @@ typedef mzd_local_t* (*lowmc_implementation_f)(lowmc_t const*, const expanded_ke
 lowmc_implementation_f lowmc_get_implementation(const lowmc_t* lowmc);
 
 
-expanded_key lowmc_expand_key(lowmc_t const* lowmc, lowmc_key_t const* key);
+expanded_key lowmc_expand_key(lowmc_t const* lowmc, lowmc_key_t* key);
 /**
  * Implements LowMC encryption
  *

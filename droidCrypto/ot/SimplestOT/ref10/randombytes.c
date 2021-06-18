@@ -37,6 +37,8 @@ void randombytes(unsigned char *x,unsigned long long xlen)
 
 void _impl_default_rand_source(void* _, unsigned char * dest, unsigned long long size)
 {
+    //prevent unused parameter warning
+    (void) _;
     randombytes(dest, size);
 }
 
